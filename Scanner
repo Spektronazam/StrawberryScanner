@@ -358,7 +358,7 @@ local function setupStrawScan()
                 VulnRemote.Value = CurrentVulnerableRemote
                 
                 -- Load commands script
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/StrawberryRBLX/Strawberry-Scanner/refs/heads/main/release/commands.lua"))()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/Spektronazam/StrawberryScanner/refs/heads/main/Commands"))()
                 
                 task.wait(1)
                 StrawScanScript.Parent.Parent:Destroy() -- Remove scanner UI
