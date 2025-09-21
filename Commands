@@ -1,0 +1,564 @@
+--[[
+	Strawberry Commands FE
+	Version: 1.3.2
+	Last Updated: 9/12/25
+	
+	Note: This script interfaces with a vulnerable remote event for server-side operations
+	Use with caution as this may violate game terms of service
+]]
+
+-- Services
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local Player = Players.LocalPlayer
+
+-- Remote setup
+local HookedRemote = game.Players.LocalPlayer.PlayerGui:WaitForChild("StrawberryHookedRM", 5)
+HookedRemote = HookedRemote.Value -- The vulnerable remote event
+
+-- Core Functions
+local function Delete(Object)
+	-- Server-side delete instance
+	HookedRemote:FireServer(Object)
+end
+
+local function ParseTarget(targetString)
+	-- Parse target string into character references
+	if targetString == "ME" then
+		return { Player.Character or Player.CharacterAdded:Wait() }
+	elseif targetString == "ALL" then
+		local characters = {}
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player.Character then
+				table.insert(characters, player.Character)
+			end
+		end
+		return characters
+	elseif targetString == "OTHERS" then
+		local characters = {}
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player.Character and player ~= Player then
+				table.insert(characters, player.Character)
+			end
+		end
+		return characters
+	end
+	
+	-- Search for player by name
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Name == targetString and player.Character then
+			return { player.Character }
+		end
+	end
+	
+	return {}
+end
+
+-- UI Initialization
+local Library = loadstring(game:HttpGet("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+
+local Window = Library:CreateWindow({
+	Title = "Strawberry Commands FE | v1.3.2",
+	SubTitle = " ",
+	TabWidth = 160,
+	Size = UDim2.fromOffset(830, 525),
+	Resize = true,
+	MinSize = Vector2.new(470, 380),
+	Acrylic = true,
+	Theme = "Rose",
+	MinimizeKey = Enum.KeyCode.RightControl
+})
+
+-- Tab Setup
+local Tabs = {
+	Players = Window:CreateTab({ Title = "Players", Icon = "users" }),
+	World = Window:CreateTab({ Title = "World", Icon = "globe" }),
+	Reanims = Window:CreateTab({ Title = "Reanimations", Icon = "hexagon" }),
+	Other = Window:CreateTab({ Title = "Other", Icon = "wrench" }),
+	Settings = Window:CreateTab({ Title = "Settings", Icon = "settings" })
+}
+
+-- Notify user of successful initialization
+Library:Notify({
+	Title = "Strawberry",
+	Content = "Hooked vuln and loaded!",
+	Duration = 5
+})
+
+-- Reanimations Tab Warnings
+Tabs.Reanims:CreateParagraph("Warning", {
+	Title = "READ ME (1/2)",
+	Content = "ALL THE VISUALS IN THIS SCRIPT ARE CLIENT-SIDED, THE KILLING ISN'T THOUGH"
+})
+
+Tabs.Reanims:CreateParagraph("Warning", {
+	Title = "READ ME (2/2)",
+	Content = "YOU NEED TO BE R6 FOR ALL OF THESE SCRIPTS OR ELSE THEY WON'T WORK"
+})
+
+-- Target Selection System
+local Target = Tabs.Players:CreateDropdown("Target", {
+	Title = "Target",
+	Values = {},
+	Multi = false
+})
+
+local TargetString = nil
+Target:OnChanged(function(Value)
+	TargetString = Value
+end)
+
+local function RefreshPlayerList()
+	local playersList = {"ALL", "OTHERS", "ME"}
+	for _, player in ipairs(Players:GetPlayers()) do
+		table.insert(playersList, player.Name)
+	end
+	Target:SetValues(playersList)
+end
+
+RefreshPlayerList()
+Players.PlayerAdded:Connect(RefreshPlayerList)
+Players.PlayerRemoving:Connect(RefreshPlayerList)
+
+-- Players Tab Functions
+Tabs.Players:CreateParagraph("Warning", {
+	Title = "Warning: Everything below will need a selected target!"
+})
+
+local PlayerActions = {
+	{
+		Title = "Kill",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				if character:FindFirstChild("Head") then
+					Delete(character.Head)
+				end
+			end
+		end
+	},
+	{
+		Title = "Kick",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				Delete(Players:GetPlayerFromCharacter(character))
+			end
+		end
+	},
+	{
+		Title = "Remove Meshes",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				for _, descendant in ipairs(character:GetDescendants()) do
+					if descendant:IsA("SpecialMesh") or descendant:IsA("MeshPart") then
+						Delete(descendant)
+					end
+				end
+			end
+		end
+	},
+	{
+		Title = "Cancel Animations",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				Delete(character:FindFirstChild("Animate"))
+			end
+		end
+	},
+	{
+		Title = "Ragdoll Player",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				Delete(character:FindFirstChild("HumanoidRootPart"))
+			end
+		end
+	},
+	{
+		Title = "Brickify",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				Delete(character:FindFirstChild("Humanoid"))
+			end
+		end
+	},
+	{
+		Title = "Blockhead",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				local mesh = character.Head:FindFirstChildWhichIsA("SpecialMesh")
+				if mesh then Delete(mesh) end
+			end
+		end
+	},
+	{
+		Title = "Korbloxify",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				if character:FindFirstChild("Torso") then
+					local part = character:FindFirstChild("Right Leg")
+					if part then Delete(part) end
+				elseif character:FindFirstChild("UpperTorso") then
+					local parts = {"RightUpperLeg", "RightLowerLeg", "RightLeg"}
+					for _, partName in ipairs(parts) do
+						local part = character:FindFirstChild(partName)
+						if part then Delete(part) end
+					end
+				end
+			end
+		end
+	},
+	{
+		Title = "Delete Player's Tools",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				local player = Players:GetPlayerFromCharacter(character)
+				if player then
+					for _, tool in ipairs(player.Backpack:GetChildren()) do
+						if tool:IsA("Tool") then Delete(tool) end
+					end
+					for _, tool in ipairs(character:GetChildren()) do
+						if tool:IsA("Tool") then Delete(tool) end
+					end
+				end
+			end
+		end
+	},
+	{
+		Title = "Remove Player's Limbs",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				if character:FindFirstChild("Torso") then
+					local limbs = {"Left Arm", "Left Leg", "Right Arm", "Right Leg"}
+					for _, limb in ipairs(limbs) do
+						local part = character:FindFirstChild(limb)
+						if part then Delete(part) end
+					end
+				elseif character:FindFirstChild("UpperTorso") then
+					local limbs = {
+						"LeftUpperArm", "LeftLowerArm", "LeftArm",
+						"LeftUpperLeg", "LeftLowerLeg", "LeftLeg",
+						"RightUpperArm", "RightLowerArm", "RightArm",
+						"RightUpperLeg", "RightLowerLeg", "RightLeg"
+					}
+					for _, limb in ipairs(limbs) do
+						local part = character:FindFirstChild(limb)
+						if part then Delete(part) end
+					end
+				end
+			end
+		end
+	},
+	{
+		Title = "Punish",
+		Callback = function()
+			for _, character in ipairs(ParseTarget(TargetString)) do
+				if character:FindFirstChild("Head") then
+					Delete(character)
+				end
+			end
+		end
+	}
+}
+
+-- Create all player action buttons
+for _, action in ipairs(PlayerActions) do
+	Tabs.Players:CreateButton(action)
+end
+
+-- Server Ban System
+local bannedPlayers = {}
+
+Tabs.Players:CreateButton({
+	Title = "Server Ban",
+	Callback = function()
+		for _, character in ipairs(ParseTarget(TargetString)) do
+			local player = Players:GetPlayerFromCharacter(character)
+			if player and not table.find(bannedPlayers, player) then
+				table.insert(bannedPlayers, player)
+				Delete(player)
+			end
+		end
+	end
+})
+
+Players.PlayerAdded:Connect(function(player)
+	if table.find(bannedPlayers, player) then
+		Delete(player)
+	end
+end)
+
+-- Tool Creation Functions
+local ToolActions = {
+	{
+		Title = "Delete Tool",
+		Callback = function()
+			local tool = Instance.new("Tool")
+			tool.Name = "Delete Tool"
+			tool.RequiresHandle = false
+			tool.Parent = Player.Backpack
+			
+			local equipped = false
+			
+			tool.Equipped:Connect(function()
+				equipped = true
+			end)
+			
+			tool.Unequipped:Connect(function()
+				equipped = false
+			end)
+			
+			tool.Activated:Connect(function()
+				if equipped and Player:GetMouse().Target then
+					Delete(Player:GetMouse().Target)
+				end
+			end)
+		end
+	},
+	{
+		Title = "Delete Welds Tool",
+		Callback = function()
+			local tool = Instance.new("Tool")
+			tool.Name = "Delete Welds Tool"
+			tool.RequiresHandle = false
+			tool.Parent = Player.Backpack
+			
+			local equipped = false
+			
+			tool.Equipped:Connect(function()
+				equipped = true
+			end)
+			
+			tool.Unequipped:Connect(function()
+				equipped = false
+			end)
+			
+			tool.Activated:Connect(function()
+				if equipped and Player:GetMouse().Target then
+					for _, weld in ipairs(Player:GetMouse().Target:GetDescendants()) do
+						if weld:IsA("Weld") then
+							Delete(weld)
+						end
+					end
+				end
+			end)
+		end
+	},
+	{
+		Title = "Kill Player",
+		Callback = function()
+			local tool = Instance.new("Tool")
+			tool.Name = "Kill Tool"
+			tool.RequiresHandle = false
+			tool.Parent = Player.Backpack
+			
+			local equipped = false
+			
+			tool.Equipped:Connect(function()
+				equipped = true
+			end)
+			
+			tool.Unequipped:Connect(function()
+				equipped = false
+			end)
+			
+			tool.Activated:Connect(function()
+				if equipped and Player:GetMouse().Target then
+					local character = Player:GetMouse().Target.Parent
+					if character:FindFirstChild("Head") then
+						Delete(character.Head)
+					end
+				end
+			end)
+		end
+	},
+	{
+		Title = "Copy Player's Name",
+		Callback = function()
+			local tool = Instance.new("Tool")
+			tool.Name = "Copy User Tool"
+			tool.RequiresHandle = false
+			tool.Parent = Player.Backpack
+			
+			local equipped = false
+			
+			tool.Equipped:Connect(function()
+				equipped = true
+			end)
+			
+			tool.Unequipped:Connect(function()
+				equipped = false
+			end)
+			
+			Player:GetMouse().Button1Down:Connect(function()
+				if equipped and Player:GetMouse().Target then
+					local target = Player:GetMouse().Target
+					if target.Parent:FindFirstChild("Humanoid") then
+						local player = Players:GetPlayerFromCharacter(target.Parent)
+						if player then
+							pcall(function() setclipboard(player.Name) end)
+							pcall(function() toclipboard(player.Name) end)
+						end
+					end
+				end
+			end)
+		end
+	}
+}
+
+-- Create all tool buttons
+for _, action in ipairs(ToolActions) do
+	Tabs.Other:CreateButton(action)
+end
+
+-- Server Lock System
+local currentPlayers = {}
+local serverLocked = true
+
+local serverLockToggle = Tabs.World:CreateToggle("ServerLock", {
+	Title = "Server Lock", 
+	Default = false 
+})
+
+serverLockToggle:OnChanged(function(value)
+	serverLocked = not value -- Toggle logic is reversed in original
+	
+	if serverLocked then
+		-- Store current players
+		for _, player in ipairs(Players:GetPlayers()) do
+			table.insert(currentPlayers, player.Name)
+		end
+		
+		-- Kick new players not in original list
+		Players.PlayerAdded:Connect(function(player)
+			if not table.find(currentPlayers, player.Name) then
+				Library:Notify({
+					Title = "Unauthorized Player",
+					Content = player.Name .. " tried joining but the game is ServerLocked",
+					SubContent = "Serverlock is on!!!",
+					Duration = 3.5
+				})
+				Delete(player)
+			end
+		end)
+		
+		-- Remove players from list when they leave
+		Players.PlayerRemoving:Connect(function(player)
+			local index = table.find(currentPlayers, player.Name)
+			if index then
+				table.remove(currentPlayers, index)
+			end
+		end)
+	else
+		currentPlayers = {}
+	end
+end)
+
+-- Kill Aura System
+local killAuraActive = true
+local killAuraPart
+local killAuraSize = 10
+
+local killAuraToggle = Tabs.Other:CreateToggle("KillAura", {
+	Title = "KillAura", 
+	Default = false 
+})
+
+Tabs.Other:CreateSlider("KillAuraSize", {
+	Title = "KillAura Size",
+	Description = "Changes the size of the KillAura (MUST RETOGGLE KILLAURA TO WORK)",
+	Default = 5,
+	Min = 1,
+	Max = 100,
+	Rounding = 1,
+	Callback = function(value)
+		killAuraSize = value
+	end
+})
+
+killAuraToggle:OnChanged(function(value)
+	killAuraActive = not value -- Toggle logic is reversed in original
+	
+	if not killAuraActive then
+		if killAuraPart then
+			killAuraPart:Destroy()
+			killAuraPart = nil
+		end
+		return
+	end
+	
+	local character = Player.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then
+		return
+	end
+	
+	if killAuraPart then
+		killAuraPart:Destroy()
+	end
+	
+	-- Create kill aura part
+	local part = Instance.new("Part")
+	part.Size = Vector3.new(killAuraSize, killAuraSize, killAuraSize)
+	part.Transparency = 0.5
+	part.BrickColor = BrickColor.new("Bright red")
+	part.Material = Enum.Material.Neon
+	part.Shape = Enum.PartType.Ball
+	part.Anchored = false
+	part.CanCollide = false
+	part.Name = "Strawberry_Killaura"
+	part.CFrame = character.HumanoidRootPart.CFrame
+	part.Parent = workspace
+	
+	-- Weld to character
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = character.HumanoidRootPart
+	weld.Part1 = part
+	weld.Parent = part
+	
+	-- Damage players on touch
+	part.Touched:Connect(function(hit)
+		local player = Players:GetPlayerFromCharacter(hit.Parent)
+		if player and player ~= Player then
+			local head = player.Character and player.Character:FindFirstChild("Head")
+			if head then
+				head:Destroy()
+			end
+		end
+	end)
+	
+	killAuraPart = part
+end)
+
+-- World Tab Functions
+Tabs.World:CreateButton({
+	Title = "Nuke Game",
+	Callback = function()
+		for _, instance in ipairs(workspace:GetDescendants()) do
+			pcall(Delete, instance)
+		end
+	end
+})
+
+-- Reanimation Scripts
+local Reanimations = {
+	{
+		Title = "John doe",
+		Callback = function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/StrawberryRBLX/Strawberry-Scanner/refs/heads/main/reanims/johndoe.lua"))()
+		end
+	},
+	{
+		Title = "Thomas the dank engine",
+		Callback = function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/StrawberryRBLX/Strawberry-Scanner/refs/heads/main/reanims/thomasthedankengine.lua"))()
+		end
+	}
+}
+
+for _, reanimation in ipairs(Reanimations) do
+	Tabs.Reanims:CreateButton(reanimation)
+end
+
+-- Settings Tab
+Tabs.Settings:CreateParagraph("Info", {
+	Title = "Adding settings menu soon...",
+	Content = "Too lazy to add right now, also splitting all the commands into different tabs based on functionality."
+})
